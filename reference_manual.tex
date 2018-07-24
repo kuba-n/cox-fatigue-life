@@ -1,0 +1,264 @@
+\documentclass[twoside,a4paper]{refart}
+\usepackage{makeidx}
+\usepackage{ifthen}
+
+\usepackage{hyperref}
+
+\def\bs{\char'134 } % backslash in \tt font.
+\newcommand{\ie}{i.\,e.,}
+\newcommand{\eg}{e.\,g..}
+\DeclareRobustCommand\cs[1]{\texttt{\char`\\#1}}
+
+\title{Reference manual for the cox-fatigue-life module}
+\author{Managed by \\
+Kubat Narynbek Ulu \\
+Ecole Centrale de Nantes, LRCCP   \\
+Version 1}
+
+\date{}
+\emergencystretch1em  %
+
+\pagestyle{myfootings}
+\markboth{cox-fatigue-life module}%
+         {Reference manual}
+
+\makeindex 
+
+\setcounter{tocdepth}{2}
+
+\begin{document}
+
+\maketitle
+
+% \begin{abstract}
+
+% \end{abstract}
+
+
+This manual describes the functionality of the \texttt{cox-fatigue-life} \textit{Python} module developed for statistical analysis of of fatigue life results with the use of the Cox regression (proportional hazards model). 
+
+\tableofcontents
+
+\newpage
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Installation}
+\index{installation}
+
+\subsection{Prerequisites}
+
+For ease of installation and avoidance of conflicts between packages, it is recommended to use \textit{Anaconda} distribution of \textit{Python}, it is open source and can be downloaded for free from \url{https://www.anaconda.com/}. The present code has been tested on version 5.2.0.
+Otherwise, please install the following:
+
+\marginlabel{Python}
+tested version 3.6.4; \url{http://www.python.org/}; pre-installed in \textit{Anaconda}.
+
+\marginlabel{R}
+tested version 3.5.1; \url{https://www.r-project.org/}; pre-installed in \textit{Anaconda}.
+
+\marginlabel{NumPy}
+tested version 1.14.0; \url{https://www.scipy.org/}; pre-installed in \textit{Anaconda}.
+
+\marginlabel{Matplotlib}
+tested version 2.1.2; \url{https://www.scipy.org/}; pre-installed in \textit{Anaconda}.
+
+\marginlabel{rpy2}
+tested version 2.9.1; \url{https://pypi.org/project/rpy2/}; installation required in \textit{Anaconda}.
+
+\subsection{Installation}
+
+The installation is straightforward. Copy the \texttt{cox\_fatigue\_analysis.py} and \texttt{r\_scipt\_cox.R} into your working directory or by creating a folder named ``cox-fatigue-analysis'' in the python directory \texttt{/lib/site-packages/}.
+
+
+\section{Module functions}
+
+\subsection{Constructor functions}
+
+\index{CoxFatigueAnalysis}\marginlabel{CoxFatigueAnalysis(...)}
+Creates the base python object that is used in subsequent analysis.
+
+\textbf{Input variables:}
+\begin{itemize}
+    \item[1.] $list\_of\_covariate\_names$ - a python list of names of covariates (strings), should be lower-case, not start with number, not contain spaces and not be $'fatigue\_life'$ or $'fatigue\_survival'$
+    \item[2.] $list\_of\_covariate\_data\_types$ - a python list of data type of each respective covariate; these can be either python or numpy data types (e.g. float, int, str, etc.)
+\end{itemize}
+
+\textbf{Returns:} \textit{None}
+
+\textbf{Example:} creating an object for analysis of 3 covariates displacement (continuous - decimal number), material type (categorical - name), and material batch number (integer value).
+
+\texttt{CoxFatigueAnalysis(['displacement', 'material\_type',} \\
+\texttt{'batch\_number'], [float, str, int]) }
+
+
+
+\subsection{Data import functions}
+
+\index{import\_from\_csv}\marginlabel{import\_from\_csv(...)}
+Inputs fatigue life data from a CSV file
+
+\textbf{Input variables:}
+\begin{itemize}
+    \item[1.] $filepath$ - path and name of the file; if the file is in the working directory, only the name needs to be indicated, otherwise the full path; the details of data arrangement is described in the article; in summary: column 1 is fatigue life, column 2 is survival status of a sample (0 for survived, 1 for failed), column 3 is the applied load, the remaining columns are other covariates; refer to \texttt{example.csv} for an example.
+    \item $separator$ - separator used in creation of the CSV file; default is ','; e.g. French systems create CSV files with ';'
+\end{itemize}
+
+\textbf{Returns:} \textit{None}
+
+\textbf{Example:} \texttt{import\_from\_csv('example.csv', ';')}
+
+
+
+\subsection{Analysis functions}
+
+\index{cox\_regression}\marginlabel{cox\_regression()}
+Runs the cox regression within the R-environment by calling R-function \texttt{coxph}. Executing $cox\_regression()$ is required before executing any other function of the present module (except for the constructor).
+
+\textbf{Input variables:} \textit{None}
+
+\textbf{Returns:} \textit{None}
+
+
+\index{cox\_zph}\marginlabel{cox\_zph()}
+Runs the proportionality test within the R-environment by calling R-function \texttt{coxzph}. Executing $cox\_regression()$ is required before calling $cox\_zph()$
+
+\textbf{Input variables:} \textit{None}
+
+\textbf{Returns:} \textit{None}
+
+
+\index{get\_cox\_survfit\_1var}\marginlabel{get\_cox\_survfit\_1var(...)}
+Computes the predicted survivor function for a Cox proportional hazards model for a single covariate.
+
+\textbf{Input variables:}
+\begin{itemize}
+    \item[1.] $input\_covariate$ - the name of the covariate (string), indicated in the constructor, that is to be analyzed.
+    \item[2.] $input\_covariate\_data$ - a python list of corresponding values of the covariate to be analyzed.
+    \item[3.] $constant\_covariates$ - a python list of covariate names (strings) that are to be kept constant.
+    \item[4.] $constant\_covariates\_values$ - a python list of corresponding values of the covariates to be kept constant; must equal in length to $constant\_covariates$.
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item[1.] A NumPy array of survival times.
+    \item[2.] A NumPy array of survival probabilities.
+    \item[3.] A NumPy array of survival statuses.
+\end{itemize}
+
+\textbf{Example:} computing a survivor function for covariate \textit{displacement}, while keeping the other two covariates constant: only considering 'material a' and batch number 21.
+
+\texttt{get\_cox\_survfit\_1var('displacement', [1, 2, 3, 4],} \\ 
+\texttt{['material\_type', 'batch\_number'], ['material\_a', 21])}
+
+
+\subsection{Plotting functions}
+
+\index{plot\_cox\_survival\_1var}\marginlabel{plot\_cox\_survival\_1var(...)}
+Plots a survival function estimate for a single covariate.
+
+\textbf{Input variables:}
+\begin{itemize}
+    \item[1.] $axes$ - a Matplotlib axes object, where the survival function will be plotted.
+    \item[2.] $input\_covariate$ - the name of the covariate (string), indicated in the constructor, that is to be analyzed.
+    \item[3.] $input\_covariate\_data$ - a python list of corresponding values of the covariate to be analyzed.
+    \item[4.] $constant\_covariates$ - a python list of covariate names (strings) that are to be kept constant.
+    \item[5.] $constant\_covariates\_values$ - a python list of corresponding values of the covariates to be kept constant; must equal in length to $constant\_covariates$.
+    \item $axes_format$ - default value is \texttt{True}; overrides the formatting options of the passed Matplotlib axes object; sets x-axis label to 'Time', y-axis label to 'Survival Probability Estimate', y-axis limits from 0 to 1, and puts the legend in the lower left corner.
+\end{itemize}
+
+\textbf{Returns:} \textit{None}
+
+\textbf{Example:} plotting survival function for covariate \textit{displacement} at values of 1~mm, 2~mm, 3~mm, 4~mm, while keeping the other two covariates constant: only considering 'material a' and batch number 21;  overriding axes formatting is disabled.
+
+\texttt{plot\_cox\_survival\_1var(axes, 'displacement', [1, 2, 3, 4],} \\
+\texttt{['material\_type', 'batch\_number'], ['material\_a', 21], False)}
+
+
+\index{plot\_wohler\_curve}\marginlabel{plot\_wohler\_curve(...)}
+Plots a probabilistic \textit{S-N} curve based on Cox regression. Contour lines are plotted for the mean, the 95\% confidence intervals, and the minimum and maximum threshold probabilities.
+
+\textbf{Input variables:}
+\begin{itemize}
+    \item[1.] $axes$ - a Matplotlib axes object, where the survival function will be plotted.
+    \item[2.] $load\_covariate\_name$ - name of the covariate (string) corresponding to the loading variable (S in the S-N curve).
+    \item[3.] $load\_range$ - a python list of minimum and maximum load values \texttt{[min, max]}.
+    \item[4.] $load\_resolution$ - resolution of the load-axis on the wohler curve; i.e. the interval at which the survival function is estimated; e.g. with $load\_range$ \texttt{min}=1 and \texttt{max}=10 and resolution of 1, the survival will be estimated at values of 1, 2, 3 ... 9, 10.
+    \item[5.] $constant\_covariates$ - a python list of covariate names (strings) that are to be kept constant.
+    \item[6.] $constant\_covariates\_values$ - a python list of corresponding values of the covariates to be kept constant; must equal in length to $constant\_covariates$.
+    \item $axes\_format$ - overrides the formatting options of the passed Matplotlib axes object; sets x-axis label to 'Time', y-axis label to 'Load'; default value is \texttt{True}.
+    \item $contour\_regions\_interval$ - controls the probability interval at which color changes; decimal format; default value is 0.05 (5\% percent).
+    \item $contour\_min'_threshold$ - the minimum survival probability threshold for color change; default value is 0.001 (e.g. almost complete failure at survival probability of 0.1\%).
+    \item $contour\_max\_threshold$ - maximum survival probability threshold for color changes; default value is 0.999 (e.g. almost complete survival of 99.9\%).
+    \item $colormap$ - selection of a Matplotlib colormap; more info at \url{https://matplotlib.org/examples/color/colormaps_reference.html}; default colormap is viridis.
+    \item $linecolors$ -  color of contour lines; default color is black.
+    \item $linestyles$ - a python list of Matplotlib styles of contour lines corresponding to the min threshold, min 95\% confidence interval, mean, max 95\% confidence interval, and max threshold; default is \texttt{['solid', 'dotted', 'solid', 'dotted', 'solid']}.
+\end{itemize}
+
+\textbf{Returns:} a python list of:
+\begin{itemize}
+    \item[1.] raw values of survival estimates (times, probabilities, loading values).
+    \item[2.] a line contour object of Matplotlib.
+    \item[3.] the min/max probability thresholds inputted during plotting.
+\end{itemize}
+
+\textbf{Example:} plotting a probabilistic \textit{S-N} curve for displacement loading range from 1 to 10~mm (resolution at each 0.1~mm) of 'material a' from batch 21.
+
+\texttt{plot\_wohler\_curve(axes, 'displacement', [1, 10], 0.1,} \\
+\texttt{['material\_type', 'batch\_number'], ['material\_a', 21])}
+
+
+\index{compare\_curves}\marginlabel{compare\_curves(...)}
+Plots a comparison of two probabilistic \textit{S-N} curves. The user can choose whether to compare the failure, survival, min or max 95\% confidence intervals, or the mean contour lines of each \textit{S-N} curve.
+
+\textbf{Input variables:}
+\begin{itemize}
+    \item[1.] $axes$ - a Matplotlib axes object, where the survival function will be plotted.
+    \item[2.] $curve1$ - the return of the first \textit{S-N} curve plotted by \texttt{plot\_wohler\_curve(...)}.
+    \item[3.] $curve2$ - the return of the second \textit{S-N} curve plotted by \texttt{plot\_wohler\_curve(...)}.
+    \item[4.] $curve\_to\_plot$ - choice of which contour line to plot; probability values: \texttt{'failure'} corresponds to \texttt{contour\_min\_threshold} (default is 0.001), \texttt{'survival'} corresponds to \texttt{contour\_max\_threshold} (default is 0.999), \texttt{'min95'} and \texttt{'max95'} correspond to min and max 95\% confidence intervals, \texttt{'mean'} corresponds to the mean (0.5). 
+    \item $labels$ - a python list of names (strings) of length 2 for the labels of each curve; default is  \texttt{['curve 1', 'curve 2']}.
+    \item $curve\_colors$ - a python list of Matplotlib colors of length 2 for each curve; default is \texttt{['black', 'grey']}.
+\end{itemize}
+
+\textbf{Returns:} \textit{None}
+
+\textbf{Example:}
+Plotting two probabilistic \textit{S-N} curves  of two materials (a and b, all other conditions are the same) and then plotting the comparison of their mean values.
+
+\texttt{curve 1 = plot\_wohler\_curve(axes, 'displacement', [1, 10], 0.1,} \\
+\texttt{['material\_type', 'batch\_number'], ['material\_a', 21])} \\
+\texttt{curve 2 = plot\_wohler\_curve(axes, 'displacement', [1, 10], 0.1,} \\
+\texttt{['material\_type', 'batch\_number'], ['material\_b', 21])}
+
+\texttt{compare\_curves(axes2, curve1, curve2, 'mean')}
+
+
+
+\subsection{Printing functions}
+
+\index{print}\marginlabel{print()}
+Prints the results of the cox regression for each covariate: $\beta$, standard error, hazard ratio and its 95\% confidence intervals, $p$-value.
+
+\textbf{Input variables:} \textit{None}
+
+\textbf{Returns:} \textit{None}
+
+\textbf{Example:} \texttt{CoxFatigueAnalysis.print()}
+
+
+\index{print\_cox\_r\_output}\marginlabel{print\_cox\_r\_output()}
+Prints the output of the R-environment function \texttt{summary} of the cox analysis object.
+
+\textbf{Input variables:} \textit{None}
+
+\textbf{Returns:} \textit{None}
+
+\textbf{Example:} \texttt{CoxFatigueAnalysis.print\_cox\_r\_output()}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\printindex
+
+\end{document}
